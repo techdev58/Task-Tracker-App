@@ -1,0 +1,109 @@
+export type BatchStatus = "active" | "completed";
+export type InternStatus = "active" | "completed" | "dropped";
+export type TaskProgressStatus = "pending" | "in-progress" | "completed";
+export type TaskPriority = "low" | "medium" | "high";
+export type AttendanceStatus = "present" | "absent" | "leave" | "half-day";
+export type Zone = "safe" | "danger";
+
+export interface BatchDTO {
+  _id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate?: string;
+  status: BatchStatus;
+  internCount?: number;
+}
+
+export interface InternDTO {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  batch: { _id: string; name: string } | string;
+  joinDate: string;
+  status: InternStatus;
+}
+
+export interface TaskDTO {
+  _id: string;
+  title: string;
+  description: string;
+  priority: TaskPriority;
+}
+
+export interface TaskAssignmentDTO {
+  _id: string;
+  task: { _id: string; title: string; description: string; priority: TaskPriority } | string;
+  batch: { _id: string; name: string } | string;
+  dueDate: string;
+  assignedDate: string;
+  totalInterns?: number;
+  completedCount?: number;
+}
+
+export interface TaskProgressDTO {
+  _id: string;
+  assignment:
+    | {
+        _id: string;
+        task: { _id: string; title: string; description: string; priority: TaskPriority };
+        batch: { _id: string; name: string };
+        dueDate: string;
+      }
+    | string;
+  intern: { _id: string; name: string; email: string } | string;
+  status: TaskProgressStatus;
+  review: string;
+}
+
+export interface AttendanceDTO {
+  _id: string;
+  intern: { _id: string; name: string; email: string; batch?: { _id: string; name: string } } | string;
+  date: string;
+  status: AttendanceStatus;
+  remarks: string;
+}
+
+export interface ReviewDTO {
+  _id: string;
+  intern: { _id: string; name: string; email: string } | string;
+  task?: { _id: string; title: string } | string;
+  reviewerName: string;
+  rating: number;
+  comments: string;
+  date: string;
+}
+
+export interface InternProgressReportDTO {
+  internId: string;
+  internName: string;
+  batchName: string;
+  totalTasks: number;
+  completedTasks: number;
+  completionRate: number | null;
+  zone: Zone;
+}
+
+export interface ProgressReportResponse {
+  period: "week" | "month";
+  start: string;
+  end: string;
+  threshold: number;
+  interns: InternProgressReportDTO[];
+}
+
+export interface DashboardStats {
+  totalBatches: number;
+  activeBatches: number;
+  totalInterns: number;
+  activeInterns: number;
+  pendingTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  attendanceMarkedToday: number;
+  presentToday: number;
+  attendanceRate: number;
+  dangerZoneCount: number;
+  dangerZoneInterns: InternProgressReportDTO[];
+}
