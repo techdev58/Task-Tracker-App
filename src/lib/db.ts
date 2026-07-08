@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import "@/lib/models";
 
 type CachedConnection = {
   conn: typeof mongoose | null;
