@@ -1,13 +1,4 @@
 import mongoose from "mongoose";
-import dns from "dns";
-
-// `mongodb+srv://` URIs require raw SRV/TXT DNS lookups. Some Windows setups
-// (VPN clients, security software) point Node's resolver at a local stub that
-// refuses those queries even though normal hostname resolution works fine.
-// Falling back to public resolvers avoids connection failures in that case.
-if (process.env.MONGODB_URI?.startsWith("mongodb+srv://")) {
-  dns.setServers(["8.8.8.8", "1.1.1.1", ...dns.getServers()]);
-}
 
 type CachedConnection = {
   conn: typeof mongoose | null;
@@ -34,7 +25,13 @@ export async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(uri, { bufferCommands: false });
+    // bufferCommands defaults to true: if the connection briefly drops and
+    // is reconnecting, Mongoose queues the query and waits rather than
+    // throwing immediately.
+    cached.promise = mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+    });
   }
 
   try {
