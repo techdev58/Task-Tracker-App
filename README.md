@@ -55,9 +55,12 @@ penalty: `credit = 1 / (days late + 1)` — on time = 100%, 1 day late = 50%, 2 
 credit divided by their total assigned tasks.
 
 Interns below the danger threshold (default 50%, adjustable on the Reports page) are flagged
-**Danger Zone**; the rest are **Safe**. The Dashboard breaks this down **per batch** (not one
-combined pool across all interns) for the current month, and the Reports page lets you view any
-week/month and batch with an on-time/late breakdown per intern.
+**Danger Zone**; the rest are **Safe**. Both views use a trailing window ending today rather
+than a fixed calendar bucket:
+- **Dashboard** — no filter; each batch's progress is computed from that batch's own start date
+  up to today, broken down **per batch** (not one combined pool across all interns).
+- **Reports** — pick a 1/2/3-month trailing window and an optional batch filter to see the
+  same on-time/late breakdown per intern.
 
 ## Pages
 
@@ -71,7 +74,7 @@ week/month and batch with an on-time/late breakdown per intern.
 | `/tasks` | Manage the reusable task catalog (title, description, priority) |
 | `/daily-tasks` | Assign a catalog task to a batch (with due date); expand an assignment to set each intern's status, completion date, and review inline |
 | `/attendance` | Mark daily attendance per batch (grid) |
-| `/reports` | Weekly/monthly completion-score report per intern (on-time/late breakdown), with danger-zone threshold |
+| `/reports` | 1/2/3-month trailing completion-score report per intern (on-time/late breakdown), with danger-zone threshold |
 | `/reviews` | View/add mentor reviews, filter by intern |
 
 ## API
@@ -80,7 +83,7 @@ All routes live under `src/app/api/` and follow REST conventions:
 `GET/POST /api/<entity>` and `GET/PATCH/DELETE /api/<entity>/[id]` for
 `batches`, `interns`, `tasks`, `task-assignments`, `attendance`, `reviews`, plus
 `GET /api/task-progress` (filter by intern), `PATCH /api/task-progress/[id]`,
-`GET /api/reports` (weekly/monthly completion aggregation), and `GET /api/dashboard/stats`.
+`GET /api/reports` (1/2/3-month trailing completion aggregation), and `GET /api/dashboard/stats`.
 
 ## Scripts
 

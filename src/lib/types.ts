@@ -90,7 +90,7 @@ export interface InternProgressReportDTO {
 }
 
 export interface ProgressReportResponse {
-  period: "week" | "month";
+  months: number;
   start: string;
   end: string;
   threshold: number;

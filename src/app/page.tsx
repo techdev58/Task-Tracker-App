@@ -100,13 +100,13 @@ export default function DashboardPage() {
               icon={AlertTriangle}
               label="Danger zone"
               value={stats.dangerZoneCount}
-              hint="Interns below completion threshold this month"
+              hint="Interns below completion threshold, overall"
             />
           </div>
 
           {stats.batchProgress.length > 0 && (
             <div className="space-y-4">
-              <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Progress by Batch (this month)</h2>
+              <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Progress by Batch (since each batch started)</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {stats.batchProgress.map((b) => (
                   <Card key={b.batchId} className="p-5">

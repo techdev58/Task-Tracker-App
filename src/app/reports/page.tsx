@@ -7,9 +7,10 @@ import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, ProgressReportResponse } from "@/lib/types";
 import { inputClass, labelClass } from "@/components/formStyles";
 
+const MONTH_OPTIONS = [1, 2, 3] as const;
+
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<"week" | "month">("month");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [months, setMonths] = useState<1 | 2 | 3>(1);
   const [batchFilter, setBatchFilter] = useState("");
   const [threshold, setThreshold] = useState(50);
   const [batches, setBatches] = useState<BatchDTO[]>([]);
@@ -25,7 +26,7 @@ export default function ReportsPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ period, date, threshold: String(threshold) });
+      const params = new URLSearchParams({ months: String(months), threshold: String(threshold) });
       if (batchFilter) params.set("batch", batchFilter);
       const data = await apiFetch<ProgressReportResponse>(`/api/reports?${params.toString()}`);
       setReport(data);
@@ -40,7 +41,7 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, date, batchFilter, threshold]);
+  }, [months, batchFilter, threshold]);
 
   const dangerCount = report?.interns.filter((i) => i.zone === "danger").length ?? 0;
 
@@ -49,34 +50,30 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reports</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Weekly or monthly task-completion progress per intern. Credit decays the longer a
-          submission is late: on time = 100%, 1 day late = 50%, 2 days late = 33%, 3 days late =
-          25%, and so on (1 / (days late + 1)).
+          Task-completion progress per intern over a trailing window ending today. Credit decays
+          the longer a submission is late: on time = 100%, 1 day late = 50%, 2 days late = 33%,
+          3 days late = 25%, and so on (1 / (days late + 1)).
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
         <div>
-          <label className={labelClass}>Period</label>
+          <label className={labelClass}>Trailing window</label>
           <div className="flex gap-1">
-            {(["week", "month"] as const).map((p) => (
+            {MONTH_OPTIONS.map((m) => (
               <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`rounded-md px-3 py-2 text-sm font-medium border capitalize ${
-                  period === p
+                key={m}
+                onClick={() => setMonths(m)}
+                className={`rounded-md px-3 py-2 text-sm font-medium border ${
+                  months === m
                     ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-50 dark:text-zinc-900 dark:border-zinc-50"
                     : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
-                {p}
+                {m} Month{m > 1 ? "s" : ""}
               </button>
             ))}
           </div>
-        </div>
-        <div>
-          <label className={labelClass}>Reference date</label>
-          <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div>
           <label className={labelClass}>Batch</label>
