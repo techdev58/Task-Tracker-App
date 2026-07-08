@@ -11,8 +11,22 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await connectToDatabase();
     const { id } = await params;
     const body = taskProgressSchema.parse(await req.json());
-    const progress = await TaskProgress.findByIdAndUpdate(id, body, { new: true });
-    if (!progress) return jsonError("Progress record not found", 404);
+
+    const existing = await TaskProgress.findById(id);
+    if (!existing) return jsonError("Progress record not found", 404);
+
+    const update: typeof body = { ...body };
+    if (body.status === "completed") {
+      // Mark the completion time now unless the caller explicitly set one
+      // (e.g. backdating) or one was already recorded.
+      if (body.completedAt === undefined && !existing.completedAt) {
+        update.completedAt = new Date();
+      }
+    } else if (body.status) {
+      update.completedAt = null;
+    }
+
+    const progress = await TaskProgress.findByIdAndUpdate(id, update, { new: true });
     return NextResponse.json(progress);
   } catch (err) {
     return handleApiError(err);

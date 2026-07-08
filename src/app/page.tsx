@@ -104,27 +104,50 @@ export default function DashboardPage() {
             />
           </div>
 
-          {stats.dangerZoneInterns.length > 0 && (
-            <Card className="p-5">
-              <h2 className="font-medium text-zinc-900 dark:text-zinc-50 mb-3 flex items-center gap-2">
-                <AlertTriangle size={16} className="text-red-500" /> Danger Zone Interns (this month)
-              </h2>
-              <div className="space-y-2">
-                {stats.dangerZoneInterns.map((i) => (
-                  <div key={i.internId} className="flex items-center justify-between text-sm">
-                    <Link href={`/interns/${i.internId}`} className="font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
-                      {i.internName}
-                    </Link>
-                    <span className="text-zinc-500 dark:text-zinc-400">
-                      {i.batchName} &middot; {i.completionRate}% complete ({i.completedTasks}/{i.totalTasks})
-                    </span>
-                  </div>
+          {stats.batchProgress.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Progress by Batch (this month)</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {stats.batchProgress.map((b) => (
+                  <Card key={b.batchId} className="p-5">
+                    <div className="flex items-center justify-between mb-1">
+                      <Link href={`/batches/${b.batchId}`} className="font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
+                        {b.batchName}
+                      </Link>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {b.avgCompletionRate === null ? "No tasks" : `${b.avgCompletionRate}% avg completion`}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mb-3">{b.activeInterns} active interns</p>
+
+                    {b.dangerZoneCount === 0 ? (
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                        No interns in the danger zone.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1">
+                          <AlertTriangle size={12} /> {b.dangerZoneCount} in danger zone
+                        </p>
+                        {b.dangerZoneInterns.map((i) => (
+                          <div key={i.internId} className="flex items-center justify-between text-sm">
+                            <Link href={`/interns/${i.internId}`} className="text-zinc-900 dark:text-zinc-50 hover:underline">
+                              {i.internName}
+                            </Link>
+                            <span className="text-zinc-500 dark:text-zinc-400">
+                              {i.completionRate}% ({i.completedTasks}/{i.totalTasks})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
                 ))}
               </div>
-              <Link href="/reports" className="mt-3 inline-block text-sm text-zinc-600 dark:text-zinc-400 hover:underline">
+              <Link href="/reports" className="inline-block text-sm text-zinc-600 dark:text-zinc-400 hover:underline">
                 View full report &rarr;
               </Link>
-            </Card>
+            </div>
           )}
 
           {stats.totalBatches === 0 && (

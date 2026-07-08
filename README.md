@@ -42,31 +42,36 @@ interns, tasks, and task assignments from the UI.
 - **Intern** — belongs to a batch; has contact info, join date, and status (active/completed/dropped).
 - **Task** — a reusable catalog entry: title, description, priority. Not tied to any batch or intern by itself.
 - **TaskAssignment** — a catalog Task assigned to an entire Batch with a due date. Creating one fans out a `TaskProgress` row to every active intern in that batch (and new interns joining later automatically pick up existing assignments for their batch).
-- **TaskProgress** — one row per intern per assignment: `status` (pending/in-progress/completed) and an overwritable `review` note, editable inline from the Daily Tasks tab or the intern's own Tasks tab.
+- **TaskProgress** — one row per intern per assignment: `status` (pending/in-progress/completed), `completedAt` (set automatically when marked completed, editable), and an overwritable `review` note, editable inline from the Daily Tasks tab or the intern's own Tasks tab.
 - **Attendance** — one record per intern per day (present/absent/leave/half-day).
 - **Review** — a mentor's star rating (1-5) and comments for an intern, optionally tied to a catalog task.
 
-## Danger Zone
+## On-Time vs Late, and Danger Zone
 
-The Reports page and Dashboard compute each active intern's task completion rate
-(`completed / total TaskProgress rows`, scoped to assignments due within the selected
-week/month). Interns below the danger threshold (default 50%, adjustable on the Reports page)
-are flagged **Danger Zone**; the rest are **Safe**. The Dashboard shows the current month's
-danger-zone interns.
+Every completed task is tagged **On Time** or **Late** by comparing its `completedAt` to the
+assignment's due date. Credit decays the longer a submission is late, rather than a flat
+penalty: `credit = 1 / (days late + 1)` — on time = 100%, 1 day late = 50%, 2 days late = 33%,
+3 days late = 25%, and so on. Each intern's completion score is the sum of their per-task
+credit divided by their total assigned tasks.
+
+Interns below the danger threshold (default 50%, adjustable on the Reports page) are flagged
+**Danger Zone**; the rest are **Safe**. The Dashboard breaks this down **per batch** (not one
+combined pool across all interns) for the current month, and the Reports page lets you view any
+week/month and batch with an on-time/late breakdown per intern.
 
 ## Pages
 
 | Route | Purpose |
 |---|---|
-| `/` | Dashboard with summary stats and danger-zone interns |
+| `/` | Dashboard with summary stats and per-batch danger-zone breakdown |
 | `/batches` | Create/edit/delete batches |
 | `/batches/[id]` | Batch detail — interns in that batch |
 | `/interns` | Create/edit/delete interns, filter by batch |
-| `/interns/[id]` | Intern detail — tabs for tasks (status + review), attendance, reviews |
+| `/interns/[id]` | Intern detail — tabs for tasks (status, completed-on date, on-time/late tag, review), attendance, reviews |
 | `/tasks` | Manage the reusable task catalog (title, description, priority) |
-| `/daily-tasks` | Assign a catalog task to a batch (with due date); expand an assignment to set each intern's status and review inline |
+| `/daily-tasks` | Assign a catalog task to a batch (with due date); expand an assignment to set each intern's status, completion date, and review inline |
 | `/attendance` | Mark daily attendance per batch (grid) |
-| `/reports` | Weekly/monthly completion-rate report per intern, with danger-zone threshold |
+| `/reports` | Weekly/monthly completion-score report per intern (on-time/late breakdown), with danger-zone threshold |
 | `/reviews` | View/add mentor reviews, filter by intern |
 
 ## API

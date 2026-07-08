@@ -4,6 +4,7 @@ export type TaskProgressStatus = "pending" | "in-progress" | "completed";
 export type TaskPriority = "low" | "medium" | "high";
 export type AttendanceStatus = "present" | "absent" | "leave" | "half-day";
 export type Zone = "safe" | "danger";
+export type SubmissionTag = "on-time" | "late";
 
 export interface BatchDTO {
   _id: string;
@@ -55,6 +56,7 @@ export interface TaskProgressDTO {
   intern: { _id: string; name: string; email: string } | string;
   status: TaskProgressStatus;
   review: string;
+  completedAt: string | null;
 }
 
 export interface AttendanceDTO {
@@ -81,6 +83,8 @@ export interface InternProgressReportDTO {
   batchName: string;
   totalTasks: number;
   completedTasks: number;
+  onTimeTasks: number;
+  lateTasks: number;
   completionRate: number | null;
   zone: Zone;
 }
@@ -91,6 +95,15 @@ export interface ProgressReportResponse {
   end: string;
   threshold: number;
   interns: InternProgressReportDTO[];
+}
+
+export interface BatchProgressSummary {
+  batchId: string;
+  batchName: string;
+  activeInterns: number;
+  avgCompletionRate: number | null;
+  dangerZoneCount: number;
+  dangerZoneInterns: InternProgressReportDTO[];
 }
 
 export interface DashboardStats {
@@ -105,5 +118,5 @@ export interface DashboardStats {
   presentToday: number;
   attendanceRate: number;
   dangerZoneCount: number;
-  dangerZoneInterns: InternProgressReportDTO[];
+  batchProgress: BatchProgressSummary[];
 }
