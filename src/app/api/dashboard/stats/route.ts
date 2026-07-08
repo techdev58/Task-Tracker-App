@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { startOfMonth, endOfMonth } from "date-fns";
 import { connectToDatabase } from "@/lib/db";
 import Batch from "@/lib/models/Batch";
 import Intern from "@/lib/models/Intern";
@@ -18,8 +17,6 @@ export async function GET() {
     todayEnd.setHours(23, 59, 59, 999);
 
     const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
 
     const [
       totalBatches,
@@ -47,9 +44,11 @@ export async function GET() {
 
     const batchProgress = await Promise.all(
       activeBatchDocs.map(async (batch) => {
+        // No user-facing filter on the dashboard: show each batch's overall
+        // progress from when it started up to today.
         const report = await getInternProgressReport({
-          start: monthStart,
-          end: monthEnd,
+          start: batch.startDate,
+          end: now,
           batch: String(batch._id),
         });
         const withTasks = report.filter((r) => r.completionRate !== null);
