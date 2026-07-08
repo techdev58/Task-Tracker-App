@@ -18,23 +18,23 @@ export async function GET() {
     todayEnd.setHours(23, 59, 59, 999);
 
     const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
 
     const [
       totalBatches,
-      activeBatches,
+      activeBatchDocs,
       totalInterns,
       activeInterns,
       statusCounts,
       todayAttendance,
-      monthlyReport,
     ] = await Promise.all([
       Batch.countDocuments(),
-      Batch.countDocuments({ status: "active" }),
+      Batch.find({ status: "active" }).sort({ name: 1 }),
       Intern.countDocuments(),
       Intern.countDocuments({ status: "active" }),
       TaskProgress.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
       Attendance.find({ date: { $gte: todayStart, $lte: todayEnd } }).populate("intern", "status"),
-      getInternProgressReport({ start: startOfMonth(now), end: endOfMonth(now) }),
     ]);
 
     const statusMap = new Map(statusCounts.map((s) => [s._id, s.count]));
@@ -45,13 +45,38 @@ export async function GET() {
     const presentToday = activeAttendanceToday.filter((a) => a.status === "present").length;
     const attendanceRate = activeInterns > 0 ? Math.round((presentToday / activeInterns) * 100) : 0;
 
-    const dangerZoneInterns = monthlyReport
-      .filter((r) => r.zone === "danger")
-      .sort((a, b) => (a.completionRate ?? 0) - (b.completionRate ?? 0));
+    const batchProgress = await Promise.all(
+      activeBatchDocs.map(async (batch) => {
+        const report = await getInternProgressReport({
+          start: monthStart,
+          end: monthEnd,
+          batch: String(batch._id),
+        });
+        const withTasks = report.filter((r) => r.completionRate !== null);
+        const avgCompletionRate =
+          withTasks.length > 0
+            ? Math.round(withTasks.reduce((sum, r) => sum + (r.completionRate ?? 0), 0) / withTasks.length)
+            : null;
+        const dangerZoneInterns = report
+          .filter((r) => r.zone === "danger")
+          .sort((a, b) => (a.completionRate ?? 0) - (b.completionRate ?? 0));
+
+        return {
+          batchId: String(batch._id),
+          batchName: batch.name,
+          activeInterns: report.length,
+          avgCompletionRate,
+          dangerZoneCount: dangerZoneInterns.length,
+          dangerZoneInterns: dangerZoneInterns.slice(0, 5),
+        };
+      })
+    );
+
+    const dangerZoneCount = batchProgress.reduce((sum, b) => sum + b.dangerZoneCount, 0);
 
     return NextResponse.json({
       totalBatches,
-      activeBatches,
+      activeBatches: activeBatchDocs.length,
       totalInterns,
       activeInterns,
       pendingTasks: statusMap.get("pending") ?? 0,
@@ -60,8 +85,8 @@ export async function GET() {
       attendanceMarkedToday: todayAttendance.length,
       presentToday,
       attendanceRate,
-      dangerZoneCount: dangerZoneInterns.length,
-      dangerZoneInterns: dangerZoneInterns.slice(0, 5),
+      dangerZoneCount,
+      batchProgress,
     });
   } catch (err) {
     return handleApiError(err);

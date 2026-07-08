@@ -10,6 +10,7 @@ const TaskProgressSchema = new Schema(
       default: "pending",
     },
     review: { type: String, default: "" },
+    completedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -5,9 +5,13 @@ import Link from "next/link";
 import { Plus, ChevronDown, ChevronRight, Trash2, Save } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, TaskDTO, TaskAssignmentDTO, TaskProgressDTO, TaskProgressStatus } from "@/lib/types";
+import { getSubmissionInfo } from "@/lib/submission";
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass, iconButtonClass } from "@/components/formStyles";
+
+type ProgressPatch = { status?: TaskProgressStatus; review?: string; completedAt?: string | null };
 
 function taskOf(a: TaskAssignmentDTO) {
   return typeof a.task === "string" ? { title: a.task } : a.task;
@@ -84,22 +88,37 @@ function AssignmentForm({
   );
 }
 
-function ProgressRow({ progress, onSave }: { progress: TaskProgressDTO; onSave: (id: string, patch: { status?: TaskProgressStatus; review?: string }) => Promise<void> }) {
+function ProgressRow({ progress, dueDate, onSave }: { progress: TaskProgressDTO; dueDate: string; onSave: (id: string, patch: ProgressPatch) => Promise<void> }) {
   const intern = typeof progress.intern === "string" ? { _id: progress.intern, name: progress.intern, email: "" } : progress.intern;
   const [status, setStatus] = useState<TaskProgressStatus>(progress.status);
   const [review, setReview] = useState(progress.review);
+  const [completedAt, setCompletedAt] = useState(progress.completedAt?.slice(0, 10) ?? "");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  function handleStatusChange(newStatus: TaskProgressStatus) {
+    setStatus(newStatus);
+    if (newStatus === "completed" && !completedAt) {
+      setCompletedAt(new Date().toISOString().slice(0, 10));
+    }
+    setDirty(true);
+  }
 
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave(progress._id, { status, review });
+      await onSave(progress._id, {
+        status,
+        review,
+        completedAt: status === "completed" ? completedAt : null,
+      });
       setDirty(false);
     } finally {
       setSaving(false);
     }
   }
+
+  const submission = getSubmissionInfo(status, completedAt ? new Date(completedAt).toISOString() : null, dueDate);
 
   return (
     <tr className="border-b border-zinc-100 dark:border-zinc-800/60 last:border-0">
@@ -112,12 +131,33 @@ function ProgressRow({ progress, onSave }: { progress: TaskProgressDTO; onSave: 
         <select
           className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs px-2 py-1"
           value={status}
-          onChange={(e) => { setStatus(e.target.value as TaskProgressStatus); setDirty(true); }}
+          onChange={(e) => handleStatusChange(e.target.value as TaskProgressStatus)}
         >
           <option value="pending">Pending</option>
           <option value="in-progress">In Progress</option>
           <option value="completed">Completed</option>
         </select>
+      </td>
+      <td className="px-4 py-2">
+        <input
+          type="date"
+          className="rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs px-2 py-1 disabled:opacity-40"
+          value={completedAt}
+          disabled={status !== "completed"}
+          onChange={(e) => { setCompletedAt(e.target.value); setDirty(true); }}
+        />
+      </td>
+      <td className="px-4 py-2">
+        {submission && (
+          <div className="flex items-center gap-1.5">
+            <StatusBadge value={submission.tag} />
+            {submission.tag === "late" && (
+              <span className="text-xs text-zinc-400">
+                {submission.daysLate}d &middot; {Math.round(submission.credit * 100)}%
+              </span>
+            )}
+          </div>
+        )}
       </td>
       <td className="px-4 py-2">
         <input
@@ -159,12 +199,21 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
     setExpanded((e) => !e);
   }
 
-  async function handleSaveProgress(id: string, patch: { status?: TaskProgressStatus; review?: string }) {
+  async function handleSaveProgress(id: string, patch: ProgressPatch) {
     const updated = await apiFetch<TaskProgressDTO>(`/api/task-progress/${id}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     });
-    setProgress((prev) => prev?.map((p) => (p._id === id ? updated : p)) ?? null);
+    // The PATCH response doesn't repopulate `intern`, so merge in just the
+    // changed fields rather than replacing the row (which would clobber the
+    // already-populated intern name with its bare id).
+    setProgress((prev) =>
+      prev?.map((p) =>
+        p._id === id
+          ? { ...p, status: updated.status, review: updated.review, completedAt: updated.completedAt }
+          : p
+      ) ?? null
+    );
   }
 
   async function handleDelete() {
@@ -207,13 +256,15 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
                 <tr className="text-left text-zinc-500 dark:text-zinc-400">
                   <th className="px-4 py-2 font-medium">Intern</th>
                   <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Completed On</th>
+                  <th className="px-4 py-2 font-medium">Submission</th>
                   <th className="px-4 py-2 font-medium">Review</th>
                   <th className="px-4 py-2 font-medium text-right">Save</th>
                 </tr>
               </thead>
               <tbody>
                 {progress.map((p) => (
-                  <ProgressRow key={p._id} progress={p} onSave={handleSaveProgress} />
+                  <ProgressRow key={p._id} progress={p} dueDate={assignment.dueDate} onSave={handleSaveProgress} />
                 ))}
               </tbody>
             </table>

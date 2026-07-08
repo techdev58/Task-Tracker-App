@@ -49,7 +49,9 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reports</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Weekly or monthly task-completion progress per intern.
+          Weekly or monthly task-completion progress per intern. Credit decays the longer a
+          submission is late: on time = 100%, 1 day late = 50%, 2 days late = 33%, 3 days late =
+          25%, and so on (1 / (days late + 1)).
         </p>
       </div>
 
@@ -116,15 +118,16 @@ export default function ReportsPage() {
               <th className="px-4 py-3 font-medium">Intern</th>
               <th className="px-4 py-3 font-medium">Batch</th>
               <th className="px-4 py-3 font-medium">Assigned</th>
-              <th className="px-4 py-3 font-medium">Completed</th>
-              <th className="px-4 py-3 font-medium">Completion</th>
+              <th className="px-4 py-3 font-medium">On Time</th>
+              <th className="px-4 py-3 font-medium">Late</th>
+              <th className="px-4 py-3 font-medium">Completion Score</th>
               <th className="px-4 py-3 font-medium">Zone</th>
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} className="px-4 py-6 text-center text-zinc-400">Loading...</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-zinc-400">Loading...</td></tr>}
             {!loading && report && report.interns.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-zinc-400">No active interns to report on.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-zinc-400">No active interns to report on.</td></tr>
             )}
             {report?.interns.map((i) => (
               <tr key={i.internId} className="border-b border-zinc-100 dark:border-zinc-800/60 last:border-0">
@@ -135,7 +138,8 @@ export default function ReportsPage() {
                 </td>
                 <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{i.batchName}</td>
                 <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{i.totalTasks}</td>
-                <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{i.completedTasks}</td>
+                <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400">{i.onTimeTasks}</td>
+                <td className="px-4 py-3 text-red-600 dark:text-red-400">{i.lateTasks}</td>
                 <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                   {i.completionRate === null ? "No tasks" : `${i.completionRate}%`}
                 </td>

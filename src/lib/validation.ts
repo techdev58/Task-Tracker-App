@@ -34,6 +34,7 @@ export const taskAssignmentSchema = z.object({
 export const taskProgressSchema = z.object({
   status: z.enum(["pending", "in-progress", "completed"]).optional(),
   review: z.string().optional(),
+  completedAt: z.coerce.date().nullable().optional(),
 });
 
 export const attendanceSchema = z.object({
