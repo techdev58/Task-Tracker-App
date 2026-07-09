@@ -105,11 +105,11 @@ export default function AttendancePage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select className={`${inputClass} w-64`} value={batchId} onChange={(e) => setBatchId(e.target.value)}>
+        <select className={`${inputClass} w-full sm:w-64`} value={batchId} onChange={(e) => setBatchId(e.target.value)}>
           {batches.length === 0 && <option value="">No batches</option>}
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
         </select>
-        <input type="date" className={`${inputClass} w-44`} value={date} onChange={(e) => setDate(e.target.value)} />
+        <input type="date" className={`${inputClass} w-full sm:w-44`} value={date} onChange={(e) => setDate(e.target.value)} />
         <button className={primaryButtonClass} onClick={handleSave} disabled={saving || rows.length === 0}>
           <Save size={16} /> {saving ? "Saving..." : "Save Attendance"}
         </button>

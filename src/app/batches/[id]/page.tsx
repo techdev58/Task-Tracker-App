@@ -45,7 +45,7 @@ export default function BatchDetailPage() {
         <ArrowLeft size={16} /> Back to batches
       </Link>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{batch.name}</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{batch.description}</p>

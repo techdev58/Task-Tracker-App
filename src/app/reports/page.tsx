@@ -75,20 +75,20 @@ export default function ReportsPage() {
             ))}
           </div>
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <label className={labelClass}>Batch</label>
-          <select className={`${inputClass} w-56`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+          <select className={`${inputClass} w-full sm:w-56`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
             <option value="">All batches</option>
             {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
           </select>
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <label className={labelClass}>Danger threshold (%)</label>
           <input
             type="number"
             min={0}
             max={100}
-            className={`${inputClass} w-28`}
+            className={`${inputClass} w-full sm:w-28`}
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
           />
