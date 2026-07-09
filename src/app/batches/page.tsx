@@ -144,16 +144,16 @@ export default function BatchesPage() {
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <Card className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <Card className="max-h-[65vh] overflow-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-zinc-500 dark:text-zinc-400">
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Interns</th>
-              <th className="px-4 py-3 font-medium">Start</th>
-              <th className="px-4 py-3 font-medium">End</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+            <tr className="text-left text-zinc-500 dark:text-zinc-400">
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Name</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Interns</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Start</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">End</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 text-right font-medium dark:border-zinc-800 dark:bg-zinc-900">Actions</th>
             </tr>
           </thead>
           <tbody>

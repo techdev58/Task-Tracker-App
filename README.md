@@ -1,8 +1,8 @@
 # Intern Task & Attendance Tracker
 
 A single Next.js app (frontend + API routes) for managing internship batches: a reusable task
-catalog, batch-wide task assignment with per-intern progress tracking, attendance, completion
-reports with danger-zone flagging, and mentor reviews. No login — the app is operated by an
+catalog, batch-wide task assignment with per-intern progress tracking and reviews, attendance,
+and completion reports with danger-zone flagging. No login — the app is operated by an
 admin/mentor on behalf of interns.
 
 ## Tech Stack
@@ -42,9 +42,8 @@ interns, tasks, and task assignments from the UI.
 - **Intern** — belongs to a batch; has contact info, join date, and status (active/completed/dropped).
 - **Task** — a reusable catalog entry: title, description, priority. Not tied to any batch or intern by itself.
 - **TaskAssignment** — a catalog Task assigned to an entire Batch with a due date. Creating one fans out a `TaskProgress` row to every active intern in that batch (and new interns joining later automatically pick up existing assignments for their batch).
-- **TaskProgress** — one row per intern per assignment: `status` (pending/in-progress/completed), `completedAt` (set automatically when marked completed, editable), and an overwritable `review` note, editable inline from the Daily Tasks tab or the intern's own Tasks tab.
+- **TaskProgress** — one row per intern per assignment: `status` (pending/in-progress/completed), `completedAt` (set automatically when marked completed, editable), and an overwritable `review` note. This note *is* the review — there's no separate review entity; it's edited inline from the Daily Tasks tab, the intern's own Tasks tab, or the Reviews tab (all three edit the same field).
 - **Attendance** — one record per intern per day (present/absent/leave/half-day).
-- **Review** — a mentor's star rating (1-5) and comments for an intern, optionally tied to a catalog task.
 
 ## On-Time vs Late, and Danger Zone
 
@@ -70,19 +69,19 @@ than a fixed calendar bucket:
 | `/batches` | Create/edit/delete batches |
 | `/batches/[id]` | Batch detail — interns in that batch |
 | `/interns` | Create/edit/delete interns, filter by batch |
-| `/interns/[id]` | Intern detail — tabs for tasks (status, completed-on date, on-time/late tag, review), attendance, reviews |
+| `/interns/[id]` | Intern detail — tabs for tasks (status, completed-on date, on-time/late tag, review), attendance |
 | `/tasks` | Manage the reusable task catalog (title, description, priority) |
 | `/daily-tasks` | Assign a catalog task to a batch (with due date); expand an assignment to set each intern's status, completion date, and review inline |
 | `/attendance` | Mark daily attendance per batch (grid) |
 | `/reports` | 1/2/3-month trailing completion-score report per intern (on-time/late breakdown), with danger-zone threshold |
-| `/reviews` | View/add mentor reviews, filter by intern |
+| `/reviews` | Every task review note in one place — intern, task, due date, on-time/late status — filterable by intern/batch, editable inline (same field as Daily Tasks) |
 
 ## API
 
 All routes live under `src/app/api/` and follow REST conventions:
 `GET/POST /api/<entity>` and `GET/PATCH/DELETE /api/<entity>/[id]` for
-`batches`, `interns`, `tasks`, `task-assignments`, `attendance`, `reviews`, plus
-`GET /api/task-progress` (filter by intern), `PATCH /api/task-progress/[id]`,
+`batches`, `interns`, `tasks`, `task-assignments`, `attendance`, plus
+`GET /api/task-progress` (filter by `intern`/`batch`/`hasReview`), `PATCH /api/task-progress/[id]`,
 `GET /api/reports` (1/2/3-month trailing completion aggregation), and `GET /api/dashboard/stats`.
 
 ## Scripts

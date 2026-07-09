@@ -10,7 +10,7 @@ import {
   ClipboardList,
   CalendarCheck,
   FileText,
-  Star,
+  MessageSquareText,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { href: "/daily-tasks", label: "Daily Tasks", icon: ClipboardList },
   { href: "/attendance", label: "Attendance", icon: CalendarCheck },
   { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/reviews", label: "Reviews", icon: Star },
+  { href: "/reviews", label: "Reviews", icon: MessageSquareText },
 ];
 
 export default function Sidebar() {
@@ -32,7 +32,7 @@ export default function Sidebar() {
       <div className="h-16 flex items-center px-5 border-b border-zinc-200 dark:border-zinc-800">
         <span className="font-semibold text-zinc-900 dark:text-zinc-50">Task Tracker</span>
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => { 
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (

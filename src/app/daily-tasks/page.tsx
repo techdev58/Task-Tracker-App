@@ -245,21 +245,21 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
       </div>
 
       {expanded && (
-        <div className="border-t border-zinc-200 dark:border-zinc-800 overflow-x-auto">
+        <div className="max-h-72 overflow-auto border-t border-zinc-200 dark:border-zinc-800">
           {loadingProgress && <p className="px-4 py-4 text-sm text-zinc-400">Loading interns...</p>}
           {!loadingProgress && progress && progress.length === 0 && (
             <p className="px-4 py-4 text-sm text-zinc-400">No active interns in this batch.</p>
           )}
           {!loadingProgress && progress && progress.length > 0 && (
-            <table className="w-full text-sm">
+            <table className="w-full border-separate border-spacing-0 text-sm">
               <thead>
                 <tr className="text-left text-zinc-500 dark:text-zinc-400">
-                  <th className="px-4 py-2 font-medium">Intern</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium">Completed On</th>
-                  <th className="px-4 py-2 font-medium">Submission</th>
-                  <th className="px-4 py-2 font-medium">Review</th>
-                  <th className="px-4 py-2 font-medium text-right">Save</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 font-medium dark:bg-zinc-900">Intern</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 font-medium dark:bg-zinc-900">Status</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 font-medium dark:bg-zinc-900">Completed On</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 font-medium dark:bg-zinc-900">Submission</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 font-medium dark:bg-zinc-900">Review</th>
+                  <th className="sticky top-0 z-10 bg-white px-4 py-2 text-right font-medium dark:bg-zinc-900">Save</th>
                 </tr>
               </thead>
               <tbody>
