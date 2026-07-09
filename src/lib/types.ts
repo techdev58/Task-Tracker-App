@@ -67,16 +67,6 @@ export interface AttendanceDTO {
   remarks: string;
 }
 
-export interface ReviewDTO {
-  _id: string;
-  intern: { _id: string; name: string; email: string } | string;
-  task?: { _id: string; title: string } | string;
-  reviewerName: string;
-  rating: number;
-  comments: string;
-  date: string;
-}
-
 export interface InternProgressReportDTO {
   internId: string;
   internName: string;

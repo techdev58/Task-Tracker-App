@@ -118,13 +118,13 @@ export default function AttendancePage() {
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {message && <p className="text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
 
-      <Card className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <Card className="max-h-[65vh] overflow-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-zinc-500 dark:text-zinc-400">
-              <th className="px-4 py-3 font-medium">Intern</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Remarks</th>
+            <tr className="text-left text-zinc-500 dark:text-zinc-400">
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Intern</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Remarks</th>
             </tr>
           </thead>
           <tbody>

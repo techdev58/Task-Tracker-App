@@ -1,123 +1,128 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Star, Trash2 } from "lucide-react";
+import { Search, Pencil, Save, X, MessageSquareText } from "lucide-react";
 import Card from "@/components/Card";
-import Modal from "@/components/Modal";
+import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
-import { InternDTO, ReviewDTO, TaskDTO } from "@/lib/types";
+import { getSubmissionInfo } from "@/lib/submission";
+import { BatchDTO, InternDTO, TaskProgressDTO } from "@/lib/types";
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass, iconButtonClass } from "@/components/formStyles";
 
-function internName(v: ReviewDTO["intern"]) {
-  return typeof v === "string" ? v : v.name;
+function assignmentOf(p: TaskProgressDTO) {
+  return typeof p.assignment === "string" ? null : p.assignment;
 }
-function internId(v: ReviewDTO["intern"]) {
-  return typeof v === "string" ? v : v._id;
+function internOf(p: TaskProgressDTO) {
+  return typeof p.intern === "string" ? { _id: p.intern, name: p.intern, email: "" } : p.intern;
 }
-function taskTitle(v?: ReviewDTO["task"]) {
-  if (!v) return null;
-  return typeof v === "string" ? v : v.title;
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
-function ReviewForm({ interns, onSaved, onClose }: { interns: InternDTO[]; onSaved: () => void; onClose: () => void }) {
-  const [intern, setIntern] = useState(interns[0]?._id ?? "");
-  const [tasks, setTasks] = useState<TaskDTO[]>([]);
-  const [task, setTask] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [reviewerName, setReviewerName] = useState("Mentor");
-  const [rating, setRating] = useState("5");
-  const [comments, setComments] = useState("");
+function ReviewCard({ progress, onSave }: { progress: TaskProgressDTO; onSave: (id: string, review: string) => Promise<void> }) {
+  const assignment = assignmentOf(progress);
+  const intern = internOf(progress);
+  const [editing, setEditing] = useState(false);
+  const [review, setReview] = useState(progress.review);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!intern) return;
-    apiFetch<TaskDTO[]>(`/api/tasks?intern=${intern}`).then(setTasks).catch(() => setTasks([]));
-  }, [intern]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSave() {
     setSaving(true);
-    setError("");
     try {
-      await apiFetch("/api/reviews", {
-        method: "POST",
-        body: JSON.stringify({ intern, task: task || undefined, date, reviewerName, rating, comments }),
-      });
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save review");
+      await onSave(progress._id, review);
+      setEditing(false);
     } finally {
       setSaving(false);
     }
   }
 
+  function handleCancel() {
+    setReview(progress.review);
+    setEditing(false);
+  }
+
+  const submission = getSubmissionInfo(progress.status, progress.completedAt, assignment?.dueDate ?? null);
+
   return (
-    <Modal title="Add Review" onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <div>
-          <label className={labelClass}>Intern</label>
-          <select className={inputClass} value={intern} onChange={(e) => { setIntern(e.target.value); setTask(""); }} required>
-            {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
-          </select>
+    <Card className="p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+          {initialsOf(intern.name)}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={labelClass}>Date</label>
-            <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} required />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <Link href={`/interns/${intern._id}`} className="font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
+              {intern.name}
+            </Link>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <StatusBadge value={progress.status} />
+              {submission && <StatusBadge value={submission.tag} />}
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Reviewer Name</label>
-            <input className={inputClass} value={reviewerName} onChange={(e) => setReviewerName(e.target.value)} required />
-          </div>
+          <p className="mt-0.5 truncate text-xs text-zinc-400">
+            {assignment?.task.title ?? "-"}
+            {assignment?.batch.name && ` · ${assignment.batch.name}`}
+            {assignment?.dueDate && ` · Due ${assignment.dueDate.slice(0, 10)}`}
+          </p>
+
+          {editing ? (
+            <div className="mt-3 space-y-2">
+              <textarea
+                autoFocus
+                className={inputClass}
+                rows={3}
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <button className={secondaryButtonClass} onClick={handleCancel} disabled={saving}>
+                  <X size={14} /> Cancel
+                </button>
+                <button className={primaryButtonClass} onClick={handleSave} disabled={saving}>
+                  <Save size={14} /> {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2.5 flex items-start justify-between gap-3">
+              <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{progress.review}</p>
+              <button className={`${iconButtonClass} shrink-0`} onClick={() => setEditing(true)} aria-label="Edit review">
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
         </div>
-        <div>
-          <label className={labelClass}>Related Task (optional)</label>
-          <select className={inputClass} value={task} onChange={(e) => setTask(e.target.value)}>
-            <option value="">None</option>
-            {tasks.map((t) => <option key={t._id} value={t._id}>{t.title}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Rating (1-5)</label>
-          <select className={inputClass} value={rating} onChange={(e) => setRating(e.target.value)}>
-            {[1, 2, 3, 4, 5].map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Comments</label>
-          <textarea className={inputClass} rows={3} value={comments} onChange={(e) => setComments(e.target.value)} />
-        </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
-          <button type="submit" className={primaryButtonClass} disabled={saving || !intern}>{saving ? "Saving..." : "Save"}</button>
-        </div>
-      </form>
-    </Modal>
+      </div>
+    </Card>
   );
 }
 
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<ReviewDTO[]>([]);
+  const [progress, setProgress] = useState<TaskProgressDTO[]>([]);
   const [interns, setInterns] = useState<InternDTO[]>([]);
+  const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [internFilter, setInternFilter] = useState("");
+  const [batchFilter, setBatchFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    apiFetch<InternDTO[]>("/api/interns").then(setInterns).catch(() => setInterns([]));
+    apiFetch<BatchDTO[]>("/api/batches").then(setBatches).catch(() => setBatches([]));
+  }, []);
 
   async function load() {
     setLoading(true);
+    setError("");
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({ hasReview: "true" });
       if (internFilter) params.set("intern", internFilter);
-      const [reviewData, internData] = await Promise.all([
-        apiFetch<ReviewDTO[]>(`/api/reviews?${params.toString()}`),
-        apiFetch<InternDTO[]>("/api/interns"),
-      ]);
-      setReviews(reviewData);
-      setInterns(internData);
+      if (batchFilter) params.set("batch", batchFilter);
+      const data = await apiFetch<TaskProgressDTO[]>(`/api/task-progress?${params.toString()}`);
+      setProgress(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load reviews");
     } finally {
@@ -129,73 +134,116 @@ export default function ReviewsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [internFilter]);
+  }, [internFilter, batchFilter]);
 
-  async function handleDelete(review: ReviewDTO) {
-    if (!confirm("Delete this review?")) return;
-    try {
-      await apiFetch(`/api/reviews/${review._id}`, { method: "DELETE" });
-      load();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete review");
-    }
+  async function handleSave(id: string, review: string) {
+    const updated = await apiFetch<TaskProgressDTO>(`/api/task-progress/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ review }),
+    });
+    // Merge in the changed field only: the PATCH response doesn't repopulate
+    // intern/assignment, so replacing the whole row would clobber those.
+    setProgress((prev) => prev.map((p) => (p._id === id ? { ...p, review: updated.review } : p)));
+  }
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return progress;
+    return progress.filter((p) => {
+      const assignment = assignmentOf(p);
+      const intern = internOf(p);
+      const haystack = [intern.name, assignment?.task.title, assignment?.batch.name, p.review]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [progress, search]);
+
+  const hasActiveFilters = Boolean(internFilter || batchFilter || search);
+
+  function clearFilters() {
+    setInternFilter("");
+    setBatchFilter("");
+    setSearch("");
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reviews</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Mentor reviews and ratings for interns.</p>
-        </div>
-        <button className={primaryButtonClass} onClick={() => setShowForm(true)} disabled={interns.length === 0}>
-          <Plus size={16} /> Add Review
-        </button>
+      <div>
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reviews</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Every review note written on a task, in one place. Add or edit a review here or from
+          the Daily Tasks tab — both edit the same note.
+        </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <select className={`${inputClass} w-64`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
-          <option value="">All interns</option>
-          {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
-        </select>
-      </div>
+      <Card className="p-4">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[220px] flex-1">
+            <label className={labelClass}>Search</label>
+            <div className="relative">
+              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                className={`${inputClass} pl-9`}
+                placeholder="Search by intern, task, or review text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Intern</label>
+            <select className={`${inputClass} w-48`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
+              <option value="">All interns</option>
+              {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Batch</label>
+            <select className={`${inputClass} w-48`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+              <option value="">All batches</option>
+              {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
+            </select>
+          </div>
+          {hasActiveFilters && (
+            <button className={secondaryButtonClass} onClick={clearFilters}>
+              <X size={14} /> Clear
+            </button>
+          )}
+        </div>
+      </Card>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
+      {!loading && progress.length > 0 && (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {filtered.length} review{filtered.length === 1 ? "" : "s"}
+        </p>
+      )}
+
       <div className="space-y-3">
         {loading && <p className="text-sm text-zinc-400">Loading...</p>}
-        {!loading && reviews.length === 0 && <Card className="p-6 text-center text-zinc-400 text-sm">No reviews yet.</Card>}
-        {reviews.map((r) => (
-          <Card key={r._id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <Link href={`/interns/${internId(r.intern)}`} className="text-sm font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
-                  {internName(r.intern)}
-                </Link>
-                <p className="text-xs text-zinc-400">
-                  {r.reviewerName} &middot; {r.date.slice(0, 10)}
-                  {taskTitle(r.task) ? ` · Task: ${taskTitle(r.task)}` : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-0.5 text-amber-500">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} size={14} fill={i < r.rating ? "currentColor" : "none"} />
-                  ))}
-                </div>
-                <button className={iconButtonClass} onClick={() => handleDelete(r)} aria-label="Delete">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-            {r.comments && <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-2">{r.comments}</p>}
+
+        {!loading && progress.length === 0 && (
+          <Card className="flex flex-col items-center gap-2 p-10 text-center">
+            <MessageSquareText size={28} className="text-zinc-300 dark:text-zinc-600" />
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              No reviews yet. Add one from the Daily Tasks tab by writing a note on an intern&apos;s task.
+            </p>
           </Card>
+        )}
+
+        {!loading && progress.length > 0 && filtered.length === 0 && (
+          <Card className="p-6 text-center text-sm text-zinc-400">
+            No reviews match your filters.
+          </Card>
+        )}
+
+        {filtered.map((p) => (
+          <ReviewCard key={p._id} progress={p} onSave={handleSave} />
         ))}
       </div>
-
-      {showForm && (
-        <ReviewForm interns={interns} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />
-      )}
     </div>
   );
 }

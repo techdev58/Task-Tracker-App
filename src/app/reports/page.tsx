@@ -108,17 +108,17 @@ export default function ReportsPage() {
         </p>
       )}
 
-      <Card className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <Card className="max-h-[65vh] overflow-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-zinc-500 dark:text-zinc-400">
-              <th className="px-4 py-3 font-medium">Intern</th>
-              <th className="px-4 py-3 font-medium">Batch</th>
-              <th className="px-4 py-3 font-medium">Assigned</th>
-              <th className="px-4 py-3 font-medium">On Time</th>
-              <th className="px-4 py-3 font-medium">Late</th>
-              <th className="px-4 py-3 font-medium">Completion Score</th>
-              <th className="px-4 py-3 font-medium">Zone</th>
+            <tr className="text-left text-zinc-500 dark:text-zinc-400">
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Intern</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Batch</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Assigned</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">On Time</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Late</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Completion Score</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Zone</th>
             </tr>
           </thead>
           <tbody>

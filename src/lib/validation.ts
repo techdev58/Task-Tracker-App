@@ -43,12 +43,3 @@ export const attendanceSchema = z.object({
   status: z.enum(["present", "absent", "leave", "half-day"]),
   remarks: z.string().optional().default(""),
 });
-
-export const reviewSchema = z.object({
-  intern: objectId,
-  task: objectId.optional(),
-  reviewerName: z.string().min(1, "Reviewer name is required"),
-  rating: z.coerce.number().min(1).max(5),
-  comments: z.string().optional().default(""),
-  date: z.coerce.date(),
-});

@@ -128,14 +128,14 @@ export default function TasksPage() {
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <Card className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <Card className="max-h-[65vh] overflow-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-zinc-500 dark:text-zinc-400">
-              <th className="px-4 py-3 font-medium">Title</th>
-              <th className="px-4 py-3 font-medium">Description</th>
-              <th className="px-4 py-3 font-medium">Priority</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+            <tr className="text-left text-zinc-500 dark:text-zinc-400">
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Title</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Description</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Priority</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 text-right font-medium dark:border-zinc-800 dark:bg-zinc-900">Actions</th>
             </tr>
           </thead>
           <tbody>

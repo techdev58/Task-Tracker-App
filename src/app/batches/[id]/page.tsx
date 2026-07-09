@@ -60,13 +60,14 @@ export default function BatchDetailPage() {
             Manage interns &rarr;
           </Link>
         </div>
-        <table className="w-full text-sm">
+        <div className="max-h-[55vh] overflow-auto">
+        <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-zinc-500 dark:text-zinc-400">
-              <th className="py-2 font-medium">Name</th>
-              <th className="py-2 font-medium">Email</th>
-              <th className="py-2 font-medium">Joined</th>
-              <th className="py-2 font-medium">Status</th>
+            <tr className="text-left text-zinc-500 dark:text-zinc-400">
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Name</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Email</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Joined</th>
+              <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -87,6 +88,7 @@ export default function BatchDetailPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

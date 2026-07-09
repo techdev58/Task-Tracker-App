@@ -5,7 +5,6 @@ import Intern from "@/lib/models/Intern";
 import TaskAssignment from "@/lib/models/TaskAssignment";
 import TaskProgress from "@/lib/models/TaskProgress";
 import Attendance from "@/lib/models/Attendance";
-import Review from "@/lib/models/Review";
 import { batchSchema } from "@/lib/validation";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 
@@ -47,7 +46,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     });
     await TaskAssignment.deleteMany({ batch: id });
     await Attendance.deleteMany({ intern: { $in: internIds } });
-    await Review.deleteMany({ intern: { $in: internIds } });
     await Intern.deleteMany({ batch: id });
     const batch = await Batch.findByIdAndDelete(id);
     if (!batch) return jsonError("Batch not found", 404);

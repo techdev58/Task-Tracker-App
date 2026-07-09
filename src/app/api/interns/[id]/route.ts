@@ -3,7 +3,6 @@ import { connectToDatabase } from "@/lib/db";
 import Intern from "@/lib/models/Intern";
 import TaskProgress from "@/lib/models/TaskProgress";
 import Attendance from "@/lib/models/Attendance";
-import Review from "@/lib/models/Review";
 import { internSchema } from "@/lib/validation";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 
@@ -40,7 +39,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const { id } = await params;
     await TaskProgress.deleteMany({ intern: id });
     await Attendance.deleteMany({ intern: id });
-    await Review.deleteMany({ intern: id });
     const intern = await Intern.findByIdAndDelete(id);
     if (!intern) return jsonError("Intern not found", 404);
     return NextResponse.json({ ok: true });
