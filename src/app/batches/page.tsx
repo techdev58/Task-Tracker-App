@@ -68,7 +68,7 @@ function BatchForm({
           <label className={labelClass}>Description</label>
           <textarea className={inputClass} value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Start Date</label>
             <input type="date" className={inputClass} value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
@@ -132,7 +132,7 @@ export default function BatchesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Batches</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage internship batches.</p>

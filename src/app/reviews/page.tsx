@@ -192,16 +192,16 @@ export default function ReviewsPage() {
               />
             </div>
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className={labelClass}>Intern</label>
-            <select className={`${inputClass} w-48`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
+            <select className={`${inputClass} w-full sm:w-48`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
               <option value="">All interns</option>
               {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
             </select>
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <label className={labelClass}>Batch</label>
-            <select className={`${inputClass} w-48`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+            <select className={`${inputClass} w-full sm:w-48`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
               <option value="">All batches</option>
               {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
             </select>

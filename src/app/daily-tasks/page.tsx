@@ -312,7 +312,7 @@ export default function DailyTasksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Daily Tasks</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -331,7 +331,7 @@ export default function DailyTasksPage() {
       )}
 
       <div className="flex items-center gap-3">
-        <select className={`${inputClass} w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+        <select className={`${inputClass} w-full sm:w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
         </select>

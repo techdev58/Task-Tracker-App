@@ -71,7 +71,7 @@ function InternForm({
           <label className={labelClass}>Name</label>
           <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Email</label>
             <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -89,7 +89,7 @@ function InternForm({
             ))}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Join Date</label>
             <input type="date" className={inputClass} value={joinDate} onChange={(e) => setJoinDate(e.target.value)} required />
@@ -157,7 +157,7 @@ export default function InternsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Interns</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage interns across all batches.</p>
@@ -173,7 +173,7 @@ export default function InternsPage() {
 
       <div className="flex items-center gap-3">
         <label className="text-sm text-zinc-500 dark:text-zinc-400">Filter by batch:</label>
-        <select className={`${inputClass} w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+        <select className={`${inputClass} w-full sm:w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => (
             <option key={b._id} value={b._id}>{b.name}</option>

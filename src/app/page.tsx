@@ -71,7 +71,7 @@ export default function DashboardPage() {
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <StatCard
               icon={Layers}
               label="Batches"
@@ -110,7 +110,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {stats.batchProgress.map((b) => (
                   <Card key={b.batchId} className="p-5">
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-1">
                       <Link href={`/batches/${b.batchId}`} className="font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
                         {b.batchName}
                       </Link>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
                           <AlertTriangle size={12} /> {b.dangerZoneCount} in danger zone
                         </p>
                         {b.dangerZoneInterns.map((i) => (
-                          <div key={i.internId} className="flex items-center justify-between text-sm">
+                          <div key={i.internId} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-sm">
                             <Link href={`/interns/${i.internId}`} className="text-zinc-900 dark:text-zinc-50 hover:underline">
                               {i.internName}
                             </Link>
