@@ -433,6 +433,7 @@ export default function DailyTasksPage() {
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [batchFilter, setBatchFilter] = useState("");
+  const [taskFilter, setTaskFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -442,6 +443,7 @@ export default function DailyTasksPage() {
     try {
       const params = new URLSearchParams();
       if (batchFilter) params.set("batch", batchFilter);
+      if (taskFilter) params.set("task", taskFilter);
       const [assignmentData, taskData, batchData] = await Promise.all([
         apiFetch<TaskAssignmentDTO[]>(`/api/task-assignments?${params.toString()}`),
         apiFetch<TaskDTO[]>("/api/tasks"),
@@ -461,10 +463,10 @@ export default function DailyTasksPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchFilter]);
+  }, [batchFilter, taskFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Daily Tasks</h1>
@@ -483,16 +485,20 @@ export default function DailyTasksPage() {
         </p>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select className="w-full sm:w-64" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
+        </Select>
+        <Select className="w-full sm:w-64" value={taskFilter} onChange={(e) => setTaskFilter(e.target.value)}>
+          <option value="">All tasks</option>
+          {tasks.map((t) => <option key={t._id} value={t._id}>{t.title}</option>)}
         </Select>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="space-y-3">
+      <Card className="min-h-0 space-y-3 overflow-auto p-3">
         {loading && <p className="text-sm text-zinc-400">Loading...</p>}
         {!loading && assignments.length === 0 && (
           <Card className="p-6 text-center text-zinc-400 text-sm">No tasks assigned to any batch yet.</Card>
@@ -500,7 +506,7 @@ export default function DailyTasksPage() {
         {assignments.map((a) => (
           <AssignmentCard key={a._id} assignment={a} onChanged={load} />
         ))}
-      </div>
+      </Card>
 
       {showForm && (
         <AssignmentForm tasks={tasks} batches={batches} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />

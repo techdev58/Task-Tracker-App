@@ -10,8 +10,10 @@ export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
     const batch = req.nextUrl.searchParams.get("batch");
+    const task = req.nextUrl.searchParams.get("task");
     const filter: Record<string, unknown> = {};
     if (batch) filter.batch = batch;
+    if (task) filter.task = task;
 
     const assignments = await TaskAssignment.find(filter)
       .populate("task", "title description priority")
