@@ -11,10 +11,15 @@ export async function GET() {
   try {
     await connectToDatabase();
 
+    // Attendance dates are stored as UTC-midnight instants (attendanceSchema
+    // coerces the plain "YYYY-MM-DD" string with `new Date()`, which parses
+    // as UTC). Deriving "today" from the server's local wall clock instead
+    // of UTC would drift the window off those stored instants whenever the
+    // server isn't running in UTC, silently hiding today's records.
     const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    todayStart.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    todayEnd.setUTCHours(23, 59, 59, 999);
 
     const now = new Date();
 

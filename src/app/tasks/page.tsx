@@ -114,7 +114,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Tasks</h1>
@@ -129,7 +129,7 @@ export default function TasksPage() {
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <Card className="max-h-[65vh] overflow-auto">
+      <Card className="min-h-0 overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-zinc-500 dark:text-zinc-400">

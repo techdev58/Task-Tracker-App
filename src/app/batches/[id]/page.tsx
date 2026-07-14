@@ -40,7 +40,7 @@ export default function BatchDetailPage() {
   if (!batch) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <Link href="/batches" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
         <ArrowLeft size={16} /> Back to batches
       </Link>
@@ -53,14 +53,14 @@ export default function BatchDetailPage() {
         <StatusBadge value={batch.status} />
       </div>
 
-      <Card className="p-5">
+      <Card className="flex min-h-0 flex-col p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Interns ({interns.length})</h2>
           <Link href="/interns" className="text-sm text-zinc-600 dark:text-zinc-400 hover:underline">
             Manage interns &rarr;
           </Link>
         </div>
-        <div className="max-h-[55vh] overflow-auto">
+        <div className="min-h-0 overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-zinc-500 dark:text-zinc-400">

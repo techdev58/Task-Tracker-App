@@ -47,7 +47,7 @@ export default function ReportsPage() {
   const dangerCount = report?.interns.filter((i) => i.zone === "danger").length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reports</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -109,7 +109,7 @@ export default function ReportsPage() {
         </p>
       )}
 
-      <Card className="max-h-[65vh] overflow-auto">
+      <Card className="min-h-0 overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-zinc-500 dark:text-zinc-400">
