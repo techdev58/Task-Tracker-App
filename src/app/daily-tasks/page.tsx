@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, ChevronDown, ChevronRight, Trash2, Save, Pencil } from "lucide-react";
+import { Plus, ChevronRight, Trash2, Save, Pencil, CalendarDays, Clock, CheckCircle2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
 import StatusBadge from "@/components/StatusBadge";
@@ -19,6 +19,43 @@ function taskOf(a: TaskAssignmentDTO) {
 function batchOf(a: TaskAssignmentDTO) {
   return typeof a.batch === "string" ? { name: a.batch } : a.batch;
 }
+
+// Parsing "YYYY-MM-DD" with `new Date()` directly reads it as UTC and can
+// shift a day in local timezones; build the Date from local parts instead.
+function toLocalDate(dateStr: string) {
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(dateStr: string) {
+  return toLocalDate(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+type DueState = "completed" | "overdue" | "today" | "upcoming";
+
+function getDueState(dueDate: string, completed: number, total: number): DueState {
+  if (total > 0 && completed >= total) return "completed";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = toLocalDate(dueDate);
+  if (due.getTime() < today.getTime()) return "overdue";
+  if (due.getTime() === today.getTime()) return "today";
+  return "upcoming";
+}
+
+const DUE_CHIP_CLASSES: Record<DueState, string> = {
+  completed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+  overdue: "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+  today: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400",
+  upcoming: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+};
+
+const DUE_LABEL: Record<DueState, string> = {
+  completed: "Done",
+  overdue: "Overdue",
+  today: "Due today",
+  upcoming: "Due",
+};
 
 function AssignmentForm({
   tasks,
@@ -255,18 +292,21 @@ function AssignmentCard({ assignment, onChanged }: { assignment: TaskAssignmentD
   const [progress, setProgress] = useState<TaskProgressDTO[] | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const fetchStarted = useRef(false);
 
-  async function toggleExpand() {
-    if (!expanded && progress === null) {
-      setLoadingProgress(true);
-      try {
-        const data = await apiFetch<{ progress: TaskProgressDTO[] }>(`/api/task-assignments/${assignment._id}`);
-        setProgress(data.progress);
-      } finally {
-        setLoadingProgress(false);
-      }
-    }
+  function toggleExpand() {
+    // Always flip immediately (no waiting on the fetch), and use a ref
+    // rather than state to guard the one-time fetch — a ref update can't
+    // race a click the way the old `await`-then-toggle flow could, which
+    // is why the expand/collapse used to feel unreliable.
     setExpanded((e) => !e);
+    if (!fetchStarted.current) {
+      fetchStarted.current = true;
+      setLoadingProgress(true);
+      apiFetch<{ progress: TaskProgressDTO[] }>(`/api/task-assignments/${assignment._id}`)
+        .then((data) => setProgress(data.progress))
+        .finally(() => setLoadingProgress(false));
+    }
   }
 
   async function handleSaveProgress(id: string, patch: ProgressPatch) {
@@ -296,19 +336,48 @@ function AssignmentCard({ assignment, onChanged }: { assignment: TaskAssignmentD
   const batch = batchOf(assignment);
   const total = assignment.totalInterns ?? 0;
   const completed = assignment.completedCount ?? 0;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const dueState = getDueState(assignment.dueDate, completed, total);
 
   return (
     <Card>
-      <div className="flex items-center justify-between px-4 py-3">
-        <button className="flex items-center gap-2 text-left flex-1 min-w-0" onClick={toggleExpand}>
-          {expanded ? <ChevronDown size={16} className="shrink-0 text-zinc-400" /> : <ChevronRight size={16} className="shrink-0 text-zinc-400" />}
-          <div className="min-w-0">
-            <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">{task.title}</p>
-            <p className="text-xs text-zinc-400">
-              {batch.name} &middot; Assigned {assignment.assignedDate.slice(0, 10)} &middot; Due {assignment.dueDate.slice(0, 10)} &middot; {completed}/{total} completed
-            </p>
-          </div>
-        </button>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <button
+            className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+            onClick={toggleExpand}
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse intern progress" : "Expand intern progress"}
+          >
+            <ChevronRight size={18} className={`transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
+          </button>
+          <button className="min-w-0 flex-1 text-left" onClick={toggleExpand}>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">{task.title}</p>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                {batch.name}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              <span className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                <CalendarDays size={13} className="shrink-0" /> Assigned {formatDate(assignment.assignedDate)}
+              </span>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${DUE_CHIP_CLASSES[dueState]}`}>
+                {dueState === "completed" ? <CheckCircle2 size={13} className="shrink-0" /> : <Clock size={13} className="shrink-0" />}
+                {DUE_LABEL[dueState]} {formatDate(assignment.dueDate)}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  <span
+                    className={`block h-full rounded-full ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-500" : "bg-zinc-300 dark:bg-zinc-700"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{completed}/{total} completed</span>
+              </span>
+            </div>
+          </button>
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           <button className={iconButtonClass} onClick={() => setShowEditForm(true)} aria-label="Edit assignment dates">
             <Pencil size={16} />
