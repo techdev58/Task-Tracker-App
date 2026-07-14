@@ -29,6 +29,15 @@ export const taskAssignmentSchema = z.object({
   task: objectId,
   batch: objectId,
   dueDate: z.coerce.date(),
+  assignedDate: z.coerce.date().optional(),
+});
+
+// Editing an existing assignment only allows correcting its dates — changing
+// the task/batch would require re-computing which interns it fans out to,
+// which isn't supported here.
+export const taskAssignmentUpdateSchema = z.object({
+  assignedDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date().optional(),
 });
 
 export const taskProgressSchema = z.object({

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { TaskDTO } from "@/lib/types";
@@ -63,11 +64,11 @@ function TaskForm({
         </div>
         <div>
           <label className={labelClass}>Priority</label>
-          <select className={inputClass} value={priority} onChange={(e) => setPriority(e.target.value as TaskDTO["priority"])}>
+          <Select value={priority} onChange={(e) => setPriority(e.target.value as TaskDTO["priority"])}>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-          </select>
+          </Select>
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
@@ -113,7 +114,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Tasks</h1>
@@ -128,7 +129,7 @@ export default function TasksPage() {
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <Card className="max-h-[65vh] overflow-auto">
+      <Card className="min-h-0 overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-zinc-500 dark:text-zinc-400">

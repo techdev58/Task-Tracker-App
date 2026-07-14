@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Pencil, Save, X, MessageSquareText } from "lucide-react";
 import Card from "@/components/Card";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { getSubmissionInfo } from "@/lib/submission";
@@ -53,19 +54,29 @@ function ReviewCard({ progress, onSave }: { progress: TaskProgressDTO; onSave: (
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <Link href={`/interns/${intern._id}`} className="font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
-              {intern.name}
-            </Link>
+            <div className="flex min-w-0 items-center gap-2">
+              <Link href={`/interns/${intern._id}`} className="shrink-0 font-medium text-zinc-900 dark:text-zinc-50 hover:underline">
+                {intern.name}
+              </Link>
+              <div className="flex min-w-0 items-center gap-1.5 text-xs">
+                <span className="truncate font-medium text-zinc-600 dark:text-zinc-300">
+                  {assignment?.task.title ?? "-"}
+                </span>
+                {assignment?.batch.name && (
+                  <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                    {assignment.batch.name}
+                  </span>
+                )}
+                {assignment?.dueDate && (
+                  <span className="shrink-0 text-zinc-400">Due {assignment.dueDate.slice(0, 10)}</span>
+                )}
+              </div>
+            </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <StatusBadge value={progress.status} />
               {submission && <StatusBadge value={submission.tag} />}
             </div>
           </div>
-          <p className="mt-0.5 truncate text-xs text-zinc-400">
-            {assignment?.task.title ?? "-"}
-            {assignment?.batch.name && ` · ${assignment.batch.name}`}
-            {assignment?.dueDate && ` · Due ${assignment.dueDate.slice(0, 10)}`}
-          </p>
 
           {editing ? (
             <div className="mt-3 space-y-2">
@@ -169,7 +180,7 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reviews</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -194,17 +205,17 @@ export default function ReviewsPage() {
           </div>
           <div className="w-full sm:w-auto">
             <label className={labelClass}>Intern</label>
-            <select className={`${inputClass} w-full sm:w-48`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
+            <Select className="w-full sm:w-48" value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
               <option value="">All interns</option>
               {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="w-full sm:w-auto">
             <label className={labelClass}>Batch</label>
-            <select className={`${inputClass} w-full sm:w-48`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+            <Select className="w-full sm:w-48" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
               <option value="">All batches</option>
               {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </Select>
           </div>
           {hasActiveFilters && (
             <button className={secondaryButtonClass} onClick={clearFilters}>
@@ -222,7 +233,7 @@ export default function ReviewsPage() {
         </p>
       )}
 
-      <div className="space-y-3">
+      <Card className="min-h-0 space-y-2 overflow-auto p-3">
         {loading && <p className="text-sm text-zinc-400">Loading...</p>}
 
         {!loading && progress.length === 0 && (
@@ -243,7 +254,7 @@ export default function ReviewsPage() {
         {filtered.map((p) => (
           <ReviewCard key={p._id} progress={p} onSave={handleSave} />
         ))}
-      </div>
+      </Card>
     </div>
   );
 }

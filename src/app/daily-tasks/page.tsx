@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, ChevronDown, ChevronRight, Trash2, Save } from "lucide-react";
+import { Plus, ChevronRight, Trash2, Save, Pencil, CalendarDays, Clock, CheckCircle2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, TaskDTO, TaskAssignmentDTO, TaskProgressDTO, TaskProgressStatus } from "@/lib/types";
@@ -20,6 +21,43 @@ function batchOf(a: TaskAssignmentDTO) {
   return typeof a.batch === "string" ? { name: a.batch } : a.batch;
 }
 
+// Parsing "YYYY-MM-DD" with `new Date()` directly reads it as UTC and can
+// shift a day in local timezones; build the Date from local parts instead.
+function toLocalDate(dateStr: string) {
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(dateStr: string) {
+  return toLocalDate(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+type DueState = "completed" | "overdue" | "today" | "upcoming";
+
+function getDueState(dueDate: string, completed: number, total: number): DueState {
+  if (total > 0 && completed >= total) return "completed";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = toLocalDate(dueDate);
+  if (due.getTime() < today.getTime()) return "overdue";
+  if (due.getTime() === today.getTime()) return "today";
+  return "upcoming";
+}
+
+const DUE_CHIP_CLASSES: Record<DueState, string> = {
+  completed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+  overdue: "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+  today: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400",
+  upcoming: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
+};
+
+const DUE_LABEL: Record<DueState, string> = {
+  completed: "Done",
+  overdue: "Overdue",
+  today: "Due today",
+  upcoming: "Due",
+};
+
 function AssignmentForm({
   tasks,
   batches,
@@ -33,6 +71,7 @@ function AssignmentForm({
 }) {
   const [task, setTask] = useState(tasks[0]?._id ?? "");
   const [batch, setBatch] = useState(batches[0]?._id ?? "");
+  const [assignedDate, setAssignedDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +83,7 @@ function AssignmentForm({
     try {
       await apiFetch("/api/task-assignments", {
         method: "POST",
-        body: JSON.stringify({ task, batch, dueDate }),
+        body: JSON.stringify({ task, batch, assignedDate, dueDate }),
       });
       onSaved();
     } catch (err) {
@@ -60,19 +99,25 @@ function AssignmentForm({
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div>
           <label className={labelClass}>Task</label>
-          <select className={inputClass} value={task} onChange={(e) => setTask(e.target.value)} required>
+          <Select value={task} onChange={(e) => setTask(e.target.value)} required>
             {tasks.map((t) => <option key={t._id} value={t._id}>{t.title}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Batch</label>
-          <select className={inputClass} value={batch} onChange={(e) => setBatch(e.target.value)} required>
+          <Select value={batch} onChange={(e) => setBatch(e.target.value)} required>
             {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-          </select>
+          </Select>
         </div>
-        <div>
-          <label className={labelClass}>Due Date</label>
-          <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Assigned Date</label>
+            <input type="date" className={inputClass} value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} required />
+          </div>
+          <div>
+            <label className={labelClass}>Due Date</label>
+            <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+          </div>
         </div>
         <p className="text-xs text-zinc-400">
           This will assign the task to every active intern in the selected batch.
@@ -81,6 +126,68 @@ function AssignmentForm({
           <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
           <button type="submit" className={primaryButtonClass} disabled={saving || !task || !batch}>
             {saving ? "Assigning..." : "Assign"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function EditAssignmentForm({
+  assignment,
+  onSaved,
+  onClose,
+}: {
+  assignment: TaskAssignmentDTO;
+  onSaved: () => void;
+  onClose: () => void;
+}) {
+  const [assignedDate, setAssignedDate] = useState(assignment.assignedDate.slice(0, 10));
+  const [dueDate, setDueDate] = useState(assignment.dueDate.slice(0, 10));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const task = taskOf(assignment);
+  const batch = batchOf(assignment);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await apiFetch(`/api/task-assignments/${assignment._id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ assignedDate, dueDate }),
+      });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update assignment");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Edit Assignment Dates" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {task.title} &middot; {batch.name}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Assigned Date</label>
+            <input type="date" className={inputClass} value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} required />
+          </div>
+          <div>
+            <label className={labelClass}>Due Date</label>
+            <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
+          <button type="submit" className={primaryButtonClass} disabled={saving}>
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </form>
@@ -181,22 +288,26 @@ function ProgressRow({ progress, dueDate, onSave }: { progress: TaskProgressDTO;
   );
 }
 
-function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentDTO; onDeleted: () => void }) {
+function AssignmentCard({ assignment, onChanged }: { assignment: TaskAssignmentDTO; onChanged: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState<TaskProgressDTO[] | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const fetchStarted = useRef(false);
 
-  async function toggleExpand() {
-    if (!expanded && progress === null) {
-      setLoadingProgress(true);
-      try {
-        const data = await apiFetch<{ progress: TaskProgressDTO[] }>(`/api/task-assignments/${assignment._id}`);
-        setProgress(data.progress);
-      } finally {
-        setLoadingProgress(false);
-      }
-    }
+  function toggleExpand() {
+    // Always flip immediately (no waiting on the fetch), and use a ref
+    // rather than state to guard the one-time fetch — a ref update can't
+    // race a click the way the old `await`-then-toggle flow could, which
+    // is why the expand/collapse used to feel unreliable.
     setExpanded((e) => !e);
+    if (!fetchStarted.current) {
+      fetchStarted.current = true;
+      setLoadingProgress(true);
+      apiFetch<{ progress: TaskProgressDTO[] }>(`/api/task-assignments/${assignment._id}`)
+        .then((data) => setProgress(data.progress))
+        .finally(() => setLoadingProgress(false));
+    }
   }
 
   async function handleSaveProgress(id: string, patch: ProgressPatch) {
@@ -219,29 +330,63 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
   async function handleDelete() {
     if (!confirm("Remove this assignment and all intern progress tied to it?")) return;
     await apiFetch(`/api/task-assignments/${assignment._id}`, { method: "DELETE" });
-    onDeleted();
+    onChanged();
   }
 
   const task = taskOf(assignment);
   const batch = batchOf(assignment);
   const total = assignment.totalInterns ?? 0;
   const completed = assignment.completedCount ?? 0;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const dueState = getDueState(assignment.dueDate, completed, total);
 
   return (
     <Card>
-      <div className="flex items-center justify-between px-4 py-3">
-        <button className="flex items-center gap-2 text-left flex-1 min-w-0" onClick={toggleExpand}>
-          {expanded ? <ChevronDown size={16} className="shrink-0 text-zinc-400" /> : <ChevronRight size={16} className="shrink-0 text-zinc-400" />}
-          <div className="min-w-0">
-            <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">{task.title}</p>
-            <p className="text-xs text-zinc-400">
-              {batch.name} &middot; Due {assignment.dueDate.slice(0, 10)} &middot; {completed}/{total} completed
-            </p>
-          </div>
-        </button>
-        <button className={iconButtonClass} onClick={handleDelete} aria-label="Delete assignment">
-          <Trash2 size={16} />
-        </button>
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <button
+            className="shrink-0 rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+            onClick={toggleExpand}
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse intern progress" : "Expand intern progress"}
+          >
+            <ChevronRight size={18} className={`transition-transform duration-200 ${expanded ? "rotate-90" : ""}`} />
+          </button>
+          <button className="min-w-0 flex-1 text-left" onClick={toggleExpand}>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">{task.title}</p>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                {batch.name}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              <span className="inline-flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+                <CalendarDays size={13} className="shrink-0" /> Assigned {formatDate(assignment.assignedDate)}
+              </span>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${DUE_CHIP_CLASSES[dueState]}`}>
+                {dueState === "completed" ? <CheckCircle2 size={13} className="shrink-0" /> : <Clock size={13} className="shrink-0" />}
+                {DUE_LABEL[dueState]} {formatDate(assignment.dueDate)}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-1.5 w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  <span
+                    className={`block h-full rounded-full ${pct === 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-500" : "bg-zinc-300 dark:bg-zinc-700"}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{completed}/{total} completed</span>
+              </span>
+            </div>
+          </button>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button className={iconButtonClass} onClick={() => setShowEditForm(true)} aria-label="Edit assignment dates">
+            <Pencil size={16} />
+          </button>
+          <button className={iconButtonClass} onClick={handleDelete} aria-label="Delete assignment">
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -271,6 +416,14 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
           )}
         </div>
       )}
+
+      {showEditForm && (
+        <EditAssignmentForm
+          assignment={assignment}
+          onClose={() => setShowEditForm(false)}
+          onSaved={() => { setShowEditForm(false); onChanged(); }}
+        />
+      )}
     </Card>
   );
 }
@@ -280,6 +433,7 @@ export default function DailyTasksPage() {
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [batches, setBatches] = useState<BatchDTO[]>([]);
   const [batchFilter, setBatchFilter] = useState("");
+  const [taskFilter, setTaskFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -289,6 +443,7 @@ export default function DailyTasksPage() {
     try {
       const params = new URLSearchParams();
       if (batchFilter) params.set("batch", batchFilter);
+      if (taskFilter) params.set("task", taskFilter);
       const [assignmentData, taskData, batchData] = await Promise.all([
         apiFetch<TaskAssignmentDTO[]>(`/api/task-assignments?${params.toString()}`),
         apiFetch<TaskDTO[]>("/api/tasks"),
@@ -308,10 +463,10 @@ export default function DailyTasksPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchFilter]);
+  }, [batchFilter, taskFilter]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Daily Tasks</h1>
@@ -330,24 +485,28 @@ export default function DailyTasksPage() {
         </p>
       )}
 
-      <div className="flex items-center gap-3">
-        <select className={`${inputClass} w-full sm:w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Select className="w-full sm:w-64" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-        </select>
+        </Select>
+        <Select className="w-full sm:w-64" value={taskFilter} onChange={(e) => setTaskFilter(e.target.value)}>
+          <option value="">All tasks</option>
+          {tasks.map((t) => <option key={t._id} value={t._id}>{t.title}</option>)}
+        </Select>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="space-y-3">
+      <Card className="min-h-0 space-y-3 overflow-auto p-3">
         {loading && <p className="text-sm text-zinc-400">Loading...</p>}
         {!loading && assignments.length === 0 && (
           <Card className="p-6 text-center text-zinc-400 text-sm">No tasks assigned to any batch yet.</Card>
         )}
         {assignments.map((a) => (
-          <AssignmentCard key={a._id} assignment={a} onDeleted={load} />
+          <AssignmentCard key={a._id} assignment={a} onChanged={load} />
         ))}
-      </div>
+      </Card>
 
       {showForm && (
         <AssignmentForm tasks={tasks} batches={batches} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />

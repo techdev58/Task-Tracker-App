@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import TaskAssignment from "@/lib/models/TaskAssignment";
 import TaskProgress from "@/lib/models/TaskProgress";
+import { taskAssignmentUpdateSchema } from "@/lib/validation";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 
 type Params = { params: Promise<{ id: string }> };
@@ -18,6 +19,21 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const progress = await TaskProgress.find({ assignment: id }).populate("intern", "name email");
 
     return NextResponse.json({ assignment, progress });
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    await connectToDatabase();
+    const { id } = await params;
+    const body = taskAssignmentUpdateSchema.parse(await req.json());
+    const assignment = await TaskAssignment.findByIdAndUpdate(id, body, { new: true })
+      .populate("task", "title description priority")
+      .populate("batch", "name");
+    if (!assignment) return jsonError("Assignment not found", 404);
+    return NextResponse.json(assignment);
   } catch (err) {
     return handleApiError(err);
   }

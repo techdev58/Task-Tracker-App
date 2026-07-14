@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Card from "@/components/Card";
+import Select from "@/components/Select";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, ProgressReportResponse } from "@/lib/types";
 import { inputClass, labelClass } from "@/components/formStyles";
@@ -46,7 +47,7 @@ export default function ReportsPage() {
   const dangerCount = report?.interns.filter((i) => i.zone === "danger").length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Reports</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -77,10 +78,10 @@ export default function ReportsPage() {
         </div>
         <div className="w-full sm:w-auto">
           <label className={labelClass}>Batch</label>
-          <select className={`${inputClass} w-full sm:w-56`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+          <Select className="w-full sm:w-56" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
             <option value="">All batches</option>
             {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-          </select>
+          </Select>
         </div>
         <div className="w-full sm:w-auto">
           <label className={labelClass}>Danger threshold (%)</label>
@@ -108,7 +109,7 @@ export default function ReportsPage() {
         </p>
       )}
 
-      <Card className="max-h-[65vh] overflow-auto">
+      <Card className="min-h-0 overflow-auto">
         <table className="w-full border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="text-left text-zinc-500 dark:text-zinc-400">

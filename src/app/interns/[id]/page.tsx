@@ -19,6 +19,20 @@ function assignmentOf(p: TaskProgressDTO) {
   return typeof p.assignment === "string" ? null : p.assignment;
 }
 
+function formatAttendanceDate(dateStr: string) {
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+}
+
+function AttendanceStat({ label, value, colorClass }: { label: string; value: number; colorClass: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-2">
+      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p className={`text-base font-semibold ${colorClass}`}>{value}</p>
+    </div>
+  );
+}
+
 // Renders the tooltip with `position: fixed`, computed from the trigger's
 // actual screen position on hover. A CSS `absolute` tooltip still expands
 // its scrollable ancestor's scrollWidth even while invisible (its box is
@@ -95,6 +109,7 @@ function TaskProgressRow({ progress, onSave }: { progress: TaskProgressDTO; onSa
         <p className="font-medium text-zinc-900 dark:text-zinc-50">{assignment?.task.title ?? "-"}</p>
         <p className="text-xs text-zinc-400">{assignment?.batch.name}</p>
       </td>
+      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{assignment?.assignedDate?.slice(0, 10) ?? "-"}</td>
       <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{assignment?.dueDate?.slice(0, 10) ?? "-"}</td>
       <td className="px-4 py-3">{assignment && <StatusBadge value={assignment.task.priority} />}</td>
       <td className="px-4 py-3">
@@ -197,13 +212,21 @@ export default function InternDetailPage() {
 
   const batchName = typeof intern.batch === "string" ? intern.batch : intern.batch?.name;
 
+  const attendanceStats = {
+    total: attendance.length,
+    present: attendance.filter((a) => a.status === "present").length,
+    absent: attendance.filter((a) => a.status === "absent").length,
+    leave: attendance.filter((a) => a.status === "leave").length,
+    halfDay: attendance.filter((a) => a.status === "half-day").length,
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "tasks", label: `Tasks (${progress.length})` },
     { key: "attendance", label: `Attendance (${attendance.length})` },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full flex-col space-y-6">
       <Link href="/interns" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
         <ArrowLeft size={16} /> Back to interns
       </Link>
@@ -233,11 +256,12 @@ export default function InternDetailPage() {
       </div>
 
       {tab === "tasks" && (
-        <Card className="max-h-[65vh] overflow-auto">
+        <Card className="min-h-0 overflow-auto">
           <table className="w-full border-separate border-spacing-0 text-sm">
             <thead>
               <tr className="text-left text-zinc-500 dark:text-zinc-400">
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Task / Batch</th>
+                <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Assigned</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Due</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Priority</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
@@ -249,7 +273,7 @@ export default function InternDetailPage() {
             </thead>
             <tbody>
               {progress.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-6 text-center text-zinc-400">No tasks assigned yet. Assign one from the Daily Tasks page.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-6 text-center text-zinc-400">No tasks assigned yet. Assign one from the Daily Tasks page.</td></tr>
               )}
               {progress.map((p) => (
                 <TaskProgressRow key={p._id} progress={p} onSave={handleSaveProgress} />
@@ -260,27 +284,37 @@ export default function InternDetailPage() {
       )}
 
       {tab === "attendance" && (
-        <Card className="max-h-[65vh] overflow-auto">
-          <table className="w-full border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr className="text-left text-zinc-500 dark:text-zinc-400">
-                <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Date</th>
-                <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
-                <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendance.length === 0 && <tr><td colSpan={3} className="px-4 py-6 text-center text-zinc-400">No attendance marked yet.</td></tr>}
-              {attendance.map((a) => (
-                <tr key={a._id} className="border-b border-zinc-100 dark:border-zinc-800/60 last:border-0">
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{a.date.slice(0, 10)}</td>
-                  <td className="px-4 py-3"><StatusBadge value={a.status} /></td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{a.remarks || "-"}</td>
+        <div className="flex min-h-0 flex-col space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <AttendanceStat label="Total Days" value={attendanceStats.total} colorClass="text-zinc-900 dark:text-zinc-50" />
+            <AttendanceStat label="Present" value={attendanceStats.present} colorClass="text-emerald-600 dark:text-emerald-400" />
+            <AttendanceStat label="Absent" value={attendanceStats.absent} colorClass="text-red-600 dark:text-red-400" />
+            <AttendanceStat label="Leave" value={attendanceStats.leave} colorClass="text-amber-600 dark:text-amber-400" />
+            <AttendanceStat label="Half Day" value={attendanceStats.halfDay} colorClass="text-orange-600 dark:text-orange-400" />
+          </div>
+
+          <Card className="min-h-0 overflow-auto">
+            <table className="w-full border-separate border-spacing-0 text-sm">
+              <thead>
+                <tr className="text-left text-zinc-500 dark:text-zinc-400">
+                  <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-6 py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Date</th>
+                  <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-6 py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
+                  <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-6 py-2 font-medium dark:border-zinc-800 dark:bg-zinc-900">Remarks</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {attendance.length === 0 && <tr><td colSpan={3} className="px-6 py-6 text-center text-zinc-400">No attendance marked yet.</td></tr>}
+                {attendance.map((a) => (
+                  <tr key={a._id} className="border-b border-zinc-200 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                    <td className="px-6 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">{formatAttendanceDate(a.date)}</td>
+                    <td className="px-6 py-2.5"><StatusBadge value={a.status} /></td>
+                    <td className="px-6 py-2.5 text-zinc-600 dark:text-zinc-400">{a.remarks || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
       )}
     </div>
   );

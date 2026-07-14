@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const progress = await TaskProgress.find(filter)
       .populate({
         path: "assignment",
-        select: "task batch dueDate",
+        select: "task batch dueDate assignedDate",
         populate: [
           { path: "task", select: "title description priority" },
           { path: "batch", select: "name" },
