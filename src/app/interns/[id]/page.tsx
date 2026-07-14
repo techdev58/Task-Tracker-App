@@ -95,6 +95,7 @@ function TaskProgressRow({ progress, onSave }: { progress: TaskProgressDTO; onSa
         <p className="font-medium text-zinc-900 dark:text-zinc-50">{assignment?.task.title ?? "-"}</p>
         <p className="text-xs text-zinc-400">{assignment?.batch.name}</p>
       </td>
+      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{assignment?.assignedDate?.slice(0, 10) ?? "-"}</td>
       <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{assignment?.dueDate?.slice(0, 10) ?? "-"}</td>
       <td className="px-4 py-3">{assignment && <StatusBadge value={assignment.task.priority} />}</td>
       <td className="px-4 py-3">
@@ -238,6 +239,7 @@ export default function InternDetailPage() {
             <thead>
               <tr className="text-left text-zinc-500 dark:text-zinc-400">
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Task / Batch</th>
+                <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Assigned</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Due</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Priority</th>
                 <th className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-3 font-medium dark:border-zinc-800 dark:bg-zinc-900">Status</th>
@@ -249,7 +251,7 @@ export default function InternDetailPage() {
             </thead>
             <tbody>
               {progress.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-6 text-center text-zinc-400">No tasks assigned yet. Assign one from the Daily Tasks page.</td></tr>
+                <tr><td colSpan={9} className="px-4 py-6 text-center text-zinc-400">No tasks assigned yet. Assign one from the Daily Tasks page.</td></tr>
               )}
               {progress.map((p) => (
                 <TaskProgressRow key={p._id} progress={p} onSave={handleSaveProgress} />

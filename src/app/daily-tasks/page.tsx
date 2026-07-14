@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, ChevronDown, ChevronRight, Trash2, Save } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, Trash2, Save, Pencil } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
 import StatusBadge from "@/components/StatusBadge";
@@ -33,6 +33,7 @@ function AssignmentForm({
 }) {
   const [task, setTask] = useState(tasks[0]?._id ?? "");
   const [batch, setBatch] = useState(batches[0]?._id ?? "");
+  const [assignedDate, setAssignedDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +45,7 @@ function AssignmentForm({
     try {
       await apiFetch("/api/task-assignments", {
         method: "POST",
-        body: JSON.stringify({ task, batch, dueDate }),
+        body: JSON.stringify({ task, batch, assignedDate, dueDate }),
       });
       onSaved();
     } catch (err) {
@@ -70,9 +71,15 @@ function AssignmentForm({
             {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
           </select>
         </div>
-        <div>
-          <label className={labelClass}>Due Date</label>
-          <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Assigned Date</label>
+            <input type="date" className={inputClass} value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} required />
+          </div>
+          <div>
+            <label className={labelClass}>Due Date</label>
+            <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+          </div>
         </div>
         <p className="text-xs text-zinc-400">
           This will assign the task to every active intern in the selected batch.
@@ -81,6 +88,68 @@ function AssignmentForm({
           <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
           <button type="submit" className={primaryButtonClass} disabled={saving || !task || !batch}>
             {saving ? "Assigning..." : "Assign"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function EditAssignmentForm({
+  assignment,
+  onSaved,
+  onClose,
+}: {
+  assignment: TaskAssignmentDTO;
+  onSaved: () => void;
+  onClose: () => void;
+}) {
+  const [assignedDate, setAssignedDate] = useState(assignment.assignedDate.slice(0, 10));
+  const [dueDate, setDueDate] = useState(assignment.dueDate.slice(0, 10));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const task = taskOf(assignment);
+  const batch = batchOf(assignment);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await apiFetch(`/api/task-assignments/${assignment._id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ assignedDate, dueDate }),
+      });
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update assignment");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal title="Edit Assignment Dates" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {task.title} &middot; {batch.name}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Assigned Date</label>
+            <input type="date" className={inputClass} value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} required />
+          </div>
+          <div>
+            <label className={labelClass}>Due Date</label>
+            <input type="date" className={inputClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} required />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>
+          <button type="submit" className={primaryButtonClass} disabled={saving}>
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </form>
@@ -181,10 +250,11 @@ function ProgressRow({ progress, dueDate, onSave }: { progress: TaskProgressDTO;
   );
 }
 
-function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentDTO; onDeleted: () => void }) {
+function AssignmentCard({ assignment, onChanged }: { assignment: TaskAssignmentDTO; onChanged: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [progress, setProgress] = useState<TaskProgressDTO[] | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   async function toggleExpand() {
     if (!expanded && progress === null) {
@@ -219,7 +289,7 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
   async function handleDelete() {
     if (!confirm("Remove this assignment and all intern progress tied to it?")) return;
     await apiFetch(`/api/task-assignments/${assignment._id}`, { method: "DELETE" });
-    onDeleted();
+    onChanged();
   }
 
   const task = taskOf(assignment);
@@ -235,13 +305,18 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
           <div className="min-w-0">
             <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">{task.title}</p>
             <p className="text-xs text-zinc-400">
-              {batch.name} &middot; Due {assignment.dueDate.slice(0, 10)} &middot; {completed}/{total} completed
+              {batch.name} &middot; Assigned {assignment.assignedDate.slice(0, 10)} &middot; Due {assignment.dueDate.slice(0, 10)} &middot; {completed}/{total} completed
             </p>
           </div>
         </button>
-        <button className={iconButtonClass} onClick={handleDelete} aria-label="Delete assignment">
-          <Trash2 size={16} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button className={iconButtonClass} onClick={() => setShowEditForm(true)} aria-label="Edit assignment dates">
+            <Pencil size={16} />
+          </button>
+          <button className={iconButtonClass} onClick={handleDelete} aria-label="Delete assignment">
+            <Trash2 size={16} />
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -270,6 +345,14 @@ function AssignmentCard({ assignment, onDeleted }: { assignment: TaskAssignmentD
             </table>
           )}
         </div>
+      )}
+
+      {showEditForm && (
+        <EditAssignmentForm
+          assignment={assignment}
+          onClose={() => setShowEditForm(false)}
+          onSaved={() => { setShowEditForm(false); onChanged(); }}
+        />
       )}
     </Card>
   );
@@ -345,7 +428,7 @@ export default function DailyTasksPage() {
           <Card className="p-6 text-center text-zinc-400 text-sm">No tasks assigned to any batch yet.</Card>
         )}
         {assignments.map((a) => (
-          <AssignmentCard key={a._id} assignment={a} onDeleted={load} />
+          <AssignmentCard key={a._id} assignment={a} onChanged={load} />
         ))}
       </div>
 

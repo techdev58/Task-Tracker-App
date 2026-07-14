@@ -51,6 +51,7 @@ export interface TaskProgressDTO {
         task: { _id: string; title: string; description: string; priority: TaskPriority };
         batch: { _id: string; name: string };
         dueDate: string;
+        assignedDate: string;
       }
     | string;
   intern: { _id: string; name: string; email: string } | string;
