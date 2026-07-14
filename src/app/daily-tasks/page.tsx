@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, ChevronRight, Trash2, Save, Pencil, CalendarDays, Clock, CheckCircle2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, TaskDTO, TaskAssignmentDTO, TaskProgressDTO, TaskProgressStatus } from "@/lib/types";
@@ -98,15 +99,15 @@ function AssignmentForm({
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div>
           <label className={labelClass}>Task</label>
-          <select className={inputClass} value={task} onChange={(e) => setTask(e.target.value)} required>
+          <Select value={task} onChange={(e) => setTask(e.target.value)} required>
             {tasks.map((t) => <option key={t._id} value={t._id}>{t.title}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
           <label className={labelClass}>Batch</label>
-          <select className={inputClass} value={batch} onChange={(e) => setBatch(e.target.value)} required>
+          <Select value={batch} onChange={(e) => setBatch(e.target.value)} required>
             {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-          </select>
+          </Select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -483,10 +484,10 @@ export default function DailyTasksPage() {
       )}
 
       <div className="flex items-center gap-3">
-        <select className={`${inputClass} w-full sm:w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+        <Select className="w-full sm:w-64" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-        </select>
+        </Select>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO, InternDTO } from "@/lib/types";
@@ -83,11 +84,11 @@ function InternForm({
         </div>
         <div>
           <label className={labelClass}>Batch</label>
-          <select className={inputClass} value={batch} onChange={(e) => setBatch(e.target.value)} required>
+          <Select value={batch} onChange={(e) => setBatch(e.target.value)} required>
             {batches.map((b) => (
               <option key={b._id} value={b._id}>{b.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -96,11 +97,11 @@ function InternForm({
           </div>
           <div>
             <label className={labelClass}>Status</label>
-            <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as InternDTO["status"])}>
+            <Select value={status} onChange={(e) => setStatus(e.target.value as InternDTO["status"])}>
               <option value="active">Active</option>
               <option value="completed">Completed</option>
               <option value="dropped">Dropped</option>
-            </select>
+            </Select>
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">
@@ -173,12 +174,12 @@ export default function InternsPage() {
 
       <div className="flex items-center gap-3">
         <label className="text-sm text-zinc-500 dark:text-zinc-400">Filter by batch:</label>
-        <select className={`${inputClass} w-full sm:w-64`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+        <Select className="w-full sm:w-64" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
           <option value="">All batches</option>
           {batches.map((b) => (
             <option key={b._id} value={b._id}>{b.name}</option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

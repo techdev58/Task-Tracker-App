@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
 import Card from "@/components/Card";
+import Select from "@/components/Select";
 import { apiFetch } from "@/lib/api-client";
 import { AttendanceDTO, AttendanceStatus, BatchDTO, InternDTO } from "@/lib/types";
 import { inputClass, primaryButtonClass } from "@/components/formStyles";
@@ -105,10 +106,10 @@ export default function AttendancePage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select className={`${inputClass} w-full sm:w-64`} value={batchId} onChange={(e) => setBatchId(e.target.value)}>
+        <Select className="w-full sm:w-64" value={batchId} onChange={(e) => setBatchId(e.target.value)}>
           {batches.length === 0 && <option value="">No batches</option>}
           {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-        </select>
+        </Select>
         <input type="date" className={`${inputClass} w-full sm:w-44`} value={date} onChange={(e) => setDate(e.target.value)} />
         <button className={primaryButtonClass} onClick={handleSave} disabled={saving || rows.length === 0}>
           <Save size={16} /> {saving ? "Saving..." : "Save Attendance"}

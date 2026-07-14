@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { BatchDTO } from "@/lib/types";
@@ -80,10 +81,10 @@ function BatchForm({
         </div>
         <div>
           <label className={labelClass}>Status</label>
-          <select className={inputClass} value={status} onChange={(e) => setStatus(e.target.value as BatchDTO["status"])}>
+          <Select value={status} onChange={(e) => setStatus(e.target.value as BatchDTO["status"])}>
             <option value="active">Active</option>
             <option value="completed">Completed</option>
-          </select>
+          </Select>
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>

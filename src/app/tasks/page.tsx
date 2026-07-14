@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import Card from "@/components/Card";
 import Modal from "@/components/Modal";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { TaskDTO } from "@/lib/types";
@@ -63,11 +64,11 @@ function TaskForm({
         </div>
         <div>
           <label className={labelClass}>Priority</label>
-          <select className={inputClass} value={priority} onChange={(e) => setPriority(e.target.value as TaskDTO["priority"])}>
+          <Select value={priority} onChange={(e) => setPriority(e.target.value as TaskDTO["priority"])}>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-          </select>
+          </Select>
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className={secondaryButtonClass} onClick={onClose}>Cancel</button>

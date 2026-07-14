@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Pencil, Save, X, MessageSquareText } from "lucide-react";
 import Card from "@/components/Card";
+import Select from "@/components/Select";
 import StatusBadge from "@/components/StatusBadge";
 import { apiFetch } from "@/lib/api-client";
 import { getSubmissionInfo } from "@/lib/submission";
@@ -194,17 +195,17 @@ export default function ReviewsPage() {
           </div>
           <div className="w-full sm:w-auto">
             <label className={labelClass}>Intern</label>
-            <select className={`${inputClass} w-full sm:w-48`} value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
+            <Select className="w-full sm:w-48" value={internFilter} onChange={(e) => setInternFilter(e.target.value)}>
               <option value="">All interns</option>
               {interns.map((i) => <option key={i._id} value={i._id}>{i.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="w-full sm:w-auto">
             <label className={labelClass}>Batch</label>
-            <select className={`${inputClass} w-full sm:w-48`} value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
+            <Select className="w-full sm:w-48" value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)}>
               <option value="">All batches</option>
               {batches.map((b) => <option key={b._id} value={b._id}>{b.name}</option>)}
-            </select>
+            </Select>
           </div>
           {hasActiveFilters && (
             <button className={secondaryButtonClass} onClick={clearFilters}>
