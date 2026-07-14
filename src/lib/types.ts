@@ -108,6 +108,7 @@ export interface DashboardStats {
   attendanceMarkedToday: number;
   presentToday: number;
   attendanceRate: number;
+  absentToday: { internId: string; internName: string }[];
   dangerZoneCount: number;
   batchProgress: BatchProgressSummary[];
 }

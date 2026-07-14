@@ -36,7 +36,7 @@ export async function GET() {
       Intern.countDocuments(),
       Intern.countDocuments({ status: "active" }),
       TaskProgress.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
-      Attendance.find({ date: { $gte: todayStart, $lte: todayEnd } }).populate("intern", "status"),
+      Attendance.find({ date: { $gte: todayStart, $lte: todayEnd } }).populate("intern", "name status"),
     ]);
 
     const statusMap = new Map(statusCounts.map((s) => [s._id, s.count]));
@@ -46,6 +46,12 @@ export async function GET() {
     });
     const presentToday = activeAttendanceToday.filter((a) => a.status === "present").length;
     const attendanceRate = activeInterns > 0 ? Math.round((presentToday / activeInterns) * 100) : 0;
+    const absentToday = activeAttendanceToday
+      .filter((a) => a.status === "absent")
+      .map((a) => {
+        const intern = a.intern as unknown as { _id: string; name: string };
+        return { internId: String(intern._id), internName: intern.name };
+      });
 
     const batchProgress = await Promise.all(
       activeBatchDocs.map(async (batch) => {
@@ -89,6 +95,7 @@ export async function GET() {
       attendanceMarkedToday: todayAttendance.length,
       presentToday,
       attendanceRate,
+      absentToday,
       dangerZoneCount,
       batchProgress,
     });
